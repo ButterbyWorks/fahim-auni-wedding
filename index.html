@@ -1320,6 +1320,7 @@
 
     /* ── Music ── */
     let audioCtx,isPlaying=false,oscillators=[];
+    let manuallyPaused=false,pausedByVisibility=false;
     const bgAudio=document.getElementById('bg-music');
     const fab=document.getElementById('music-fab');
     const iconPlay=document.getElementById('fab-icon-play');
@@ -1359,12 +1360,80 @@
     }
 
     function toggleMusic(){
-      const hasSrc=bgAudio.querySelector('source')||bgAudio.src;
-      isPlaying=!isPlaying;setFabState(isPlaying);
-      showMusicIndicator(isPlaying);
-      if(isPlaying){hasSrc?bgAudio.play().catch(()=>{}):createRomanticMelody();}
-      else{if(hasSrc)bgAudio.pause();else{oscillators.forEach(({osc,gain})=>{gain.gain.setTargetAtTime(0,audioCtx.currentTime,.5);setTimeout(()=>{try{osc.stop()}catch(e){}},600);});oscillators=[];}}
+  const hasSrc=bgAudio.querySelector('source')||bgAudio.src;
+
+  if(isPlaying){
+    manuallyPaused=true;
+    pausedByVisibility=false;
+    isPlaying=false;
+    setFabState(false);
+    showMusicIndicator(false);
+
+    if(hasSrc){
+      bgAudio.pause();
+    }else{
+      oscillators.forEach(({osc,gain})=>{
+        gain.gain.setTargetAtTime(0,audioCtx.currentTime,.5);
+        setTimeout(()=>{try{osc.stop()}catch(e){}},600);
+      });
+      oscillators=[];
     }
+
+  }else{
+    manuallyPaused=false;
+    pausedByVisibility=false;
+    isPlaying=true;
+    setFabState(true);
+    showMusicIndicator(true);
+
+    if(hasSrc){
+      bgAudio.play().catch(()=>{
+        isPlaying=false;
+        setFabState(false);
+        showMusicIndicator(false);
+      });
+    }else{
+      createRomanticMelody();
+    }
+  }
+}
+document.addEventListener('visibilitychange',()=>{
+  const hasSrc=bgAudio.querySelector('source')||bgAudio.src;
+
+  if(document.hidden){
+    if(!isPlaying)return;
+
+    isPlaying=false;
+    pausedByVisibility=true;
+    setFabState(false);
+
+    if(hasSrc){
+      bgAudio.pause();
+    }else{
+      oscillators.forEach(({osc,gain})=>{
+        gain.gain.setTargetAtTime(0,audioCtx.currentTime,.5);
+        setTimeout(()=>{try{osc.stop()}catch(e){}},600);
+      });
+      oscillators=[];
+    }
+
+  }else{
+    if(!pausedByVisibility||manuallyPaused)return;
+
+    pausedByVisibility=false;
+    isPlaying=true;
+    setFabState(true);
+
+    if(hasSrc){
+      bgAudio.play().catch(()=>{
+        isPlaying=false;
+        setFabState(false);
+      });
+    }else{
+      createRomanticMelody();
+    }
+  }
+});
     bgAudio.addEventListener('ended',()=>{isPlaying=false;setFabState(false);showMusicIndicator(false);});
 
     /* ── Music FAB drag ── */
