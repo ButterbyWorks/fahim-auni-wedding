@@ -754,7 +754,7 @@
           const t=e.changedTouches[0];
           // Only spawn on page content, not interactive elements
           const el=document.elementFromPoint(t.clientX,t.clientY);
-          if(el&&el.closest('#cover-screen, #invitation-content')){
+          if(el&&el.closest('#cover-screen, #hero-page, #invitation-content')){
             spawnSparkles(t.clientX,t.clientY);
           }
         }
@@ -767,7 +767,7 @@
         clearTimeout(mouseHoldTimer);
         if(!mouseHolding){
           const el=document.elementFromPoint(e.clientX,e.clientY);
-          if(el&&el.closest('#cover-screen, #invitation-content')){
+          if(el&&el.closest('#cover-screen, #hero-page, #invitation-content')){
             spawnSparkles(e.clientX,e.clientY);
           }
         }
