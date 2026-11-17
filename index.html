@@ -84,6 +84,28 @@
         #music-fab .fab-ring{position:absolute;inset:-4px;border-radius:50%;border:2px solid transparent;border-top-color:var(--gold);border-right-color:rgba(201,168,76,.3);opacity:0;transition:opacity .3s}
         #music-fab.playing .fab-ring{opacity:1;animation:spin-ring 2.5s linear infinite}
         #music-fab.playing{box-shadow:0 4px 24px rgba(0,0,0,.35),0 0 16px rgba(201,168,76,.25)}
+        /* First-time music FAB attention animation */
+@keyframes music-fab-hint{
+    0%, 33.333%, 100%{
+        transform:scale(1);
+        box-shadow:0 4px 24px rgba(0,0,0,.35);
+    }
+    16.666%{
+        transform:scale(1.08);
+        box-shadow:0 4px 24px rgba(0,0,0,.35),
+                   0 0 22px rgba(201,168,76,.55);
+    }
+}
+
+#music-fab.hint-pulse{
+    animation:music-fab-hint 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce){
+    #music-fab.hint-pulse{
+        animation:none;
+    }
+}
 
         /* RSVP button and custom modal */
         #btn-rsvp{color:rgb(201,168,76)!important;background:rgb(15,27,61)!important;text-decoration:none;-webkit-tap-highlight-color:transparent;outline:none;appearance:none;-webkit-appearance:none;}
@@ -1361,10 +1383,42 @@
     /* ── Music ── */
     let audioCtx,isPlaying=false,oscillators=[];
     let manuallyPaused=false,pausedByVisibility=false;
-    const bgAudio=document.getElementById('bg-music');
-    const fab=document.getElementById('music-fab');
-    const iconPlay=document.getElementById('fab-icon-play');
-    const iconPause=document.getElementById('fab-icon-pause');
+const bgAudio=document.getElementById('bg-music');
+const fab=document.getElementById('music-fab');
+const iconPlay=document.getElementById('fab-icon-play');
+const iconPause=document.getElementById('fab-icon-pause');
+
+// First-time attention animation
+const FAB_HINT_KEY='fahim_auni_music_fab_seen_v1';
+
+let fabHintSeen=false;
+
+try{
+    fabHintSeen=localStorage.getItem(FAB_HINT_KEY)==='1';
+}catch(error){}
+
+if(!fabHintSeen &&
+   !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    fab.classList.add('hint-pulse');
+}
+
+function stopFabHint(){
+    fab.classList.remove('hint-pulse');
+
+    try{
+        localStorage.setItem(FAB_HINT_KEY,'1');
+    }catch(error){}
+}
+
+// Stop on first tap, click or drag
+fab.addEventListener('pointerdown',stopFabHint,{once:true});
+
+// Also support keyboard interaction
+fab.addEventListener('keydown',event=>{
+    if(event.key==='Enter'||event.key===' '){
+        stopFabHint();
+    }
+},{once:true});
     function setFabState(p){fab.classList.toggle('playing',p);iconPlay.style.display=p?'none':'block';iconPause.style.display=p?'block':'none';}
     function createRomanticMelody(){
       if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
