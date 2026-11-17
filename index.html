@@ -833,8 +833,44 @@
     let rsvpSubmitting = false;
     let rsvpPendingSubmissionId = null;
     let rsvpResponseTimeout = null;
+    const RSVP_DRAFT_KEY = 'fahim_auni_rsvp_draft_v1';
+
+    function saveRsvpDraft(){
+      const draft={
+        name:document.getElementById('rsvp-name').value,
+        party:rsvpForm.querySelector('input[name="rsvp-party"]:checked')?.value || '',
+        attendance:rsvpForm.querySelector('input[name="rsvp-attendance"]:checked')?.value || '',
+        headcount:rsvpForm.querySelector('input[name="rsvp-headcount"]:checked')?.value || '',
+        remarks:document.getElementById('rsvp-remarks').value
+      };
+      try{localStorage.setItem(RSVP_DRAFT_KEY,JSON.stringify(draft));}catch(error){console.warn('Unable to save RSVP draft:',error);}
+    }
+
+    function restoreRsvpDraft(){
+      try{
+        const draft=JSON.parse(localStorage.getItem(RSVP_DRAFT_KEY) || 'null');
+        if(!draft)return;
+        document.getElementById('rsvp-name').value=draft.name || '';
+        document.getElementById('rsvp-remarks').value=draft.remarks || '';
+        ['party','attendance','headcount'].forEach(group=>{
+          const fieldName=group==='headcount'?'rsvp-headcount':`rsvp-${group}`;
+          const value=draft[group];
+          if(value){
+            const option=Array.from(rsvpForm.querySelectorAll(`input[name="${fieldName}"]`)).find(input=>input.value===value);
+            if(option)option.checked=true;
+          }
+        });
+        updateRsvpHeadcount();
+      }catch(error){console.warn('Unable to restore RSVP draft:',error);}
+    }
+
+    function clearRsvpDraft(){
+      try{localStorage.removeItem(RSVP_DRAFT_KEY);}catch(error){console.warn('Unable to clear RSVP draft:',error);}
+    }
 
     function openRsvpModal(){
+      restoreRsvpDraft();
+      rsvpFeedback.hidden=true;
       rsvpOverlay.classList.add('open');
       rsvpOverlay.setAttribute('aria-hidden','false');
       rsvpOverlay.inert=false;
@@ -849,9 +885,9 @@
       rsvpOverlay.inert=true;
       document.body.style.overflow='';
 
-      // If submission status is uncertain after a timeout, preserve the values
-      // and submission ID so retrying cannot create a second response.
-      if(!rsvpPendingSubmissionId || !rsvpSuccess.hidden){
+      // Keep unfinished entries as a draft. Only reset the form after a
+      // confirmed successful submission; cancelling/closing must not erase it.
+      if(!rsvpSuccess.hidden){
         rsvpForm.reset();
         rsvpForm.hidden=false;
         rsvpSuccess.hidden=true;
@@ -876,9 +912,12 @@
       });
     }
 
+    rsvpForm.addEventListener('input',saveRsvpDraft);
+    rsvpForm.addEventListener('change',saveRsvpDraft);
     rsvpForm.querySelectorAll('input[name="rsvp-attendance"]').forEach(input=>{
-      input.addEventListener('change',updateRsvpHeadcount);
+      input.addEventListener('change',()=>{updateRsvpHeadcount();saveRsvpDraft();});
     });
+    restoreRsvpDraft();
 
     function makeRsvpSubmissionId(){
       if(window.crypto && typeof window.crypto.randomUUID==='function') return 'rsvp_'+window.crypto.randomUUID();
@@ -954,6 +993,7 @@
       setRsvpSubmitting(false);
 
       if(result.ok){
+        clearRsvpDraft();
         rsvpPendingSubmissionId=null;
         rsvpForm.hidden=true;
         rsvpFeedback.hidden=true;
@@ -1523,13 +1563,37 @@ document.addEventListener('visibilitychange',()=>{
       console.error('Unable to load wedding wishes from Firebase:', error);
     });
 
-    function openWishModal(){document.getElementById('wish-overlay').classList.add('open');document.body.style.overflow='hidden';}
+    const WISH_DRAFT_KEY='fahim_auni_wish_draft_v1';
+    const wishNameInput=document.getElementById('wish-name');
+    const wishTextInput=document.getElementById('wish-text');
+
+    function saveWishDraft(){
+      const draft={name:wishNameInput.value,text:wishTextInput.value};
+      try{localStorage.setItem(WISH_DRAFT_KEY,JSON.stringify(draft));}catch(error){console.warn('Unable to save wish draft:',error);}
+    }
+    function restoreWishDraft(){
+      try{
+        const draft=JSON.parse(localStorage.getItem(WISH_DRAFT_KEY) || 'null');
+        if(!draft)return;
+        wishNameInput.value=draft.name || '';
+        wishTextInput.value=draft.text || '';
+      }catch(error){console.warn('Unable to restore wish draft:',error);}
+    }
+    function clearWishDraft(){
+      try{localStorage.removeItem(WISH_DRAFT_KEY);}catch(error){console.warn('Unable to clear wish draft:',error);}
+    }
+
+    wishNameInput.addEventListener('input',saveWishDraft);
+    wishTextInput.addEventListener('input',saveWishDraft);
+    restoreWishDraft();
+
+    function openWishModal(){restoreWishDraft();document.getElementById('wish-overlay').classList.add('open');document.body.style.overflow='hidden';}
     function closeWishModal(){document.getElementById('wish-overlay').classList.remove('open');document.body.style.overflow='';}
     function handleOverlayClick(e){if(e.target===document.getElementById('wish-overlay'))closeWishModal();}
     function submitWish(){
-      const name=document.getElementById('wish-name').value.trim();const text=document.getElementById('wish-text').value.trim();
-      if(!name||!text){const m=!name?document.getElementById('wish-name'):document.getElementById('wish-text');m.style.borderColor='#e57373';setTimeout(()=>m.style.borderColor='',1200);return;}
-      wishesRef.push({name,text,timestamp:Date.now()}).then(()=>{document.getElementById('wish-name').value='';document.getElementById('wish-text').value='';closeWishModal();showToast();}).catch(err=>{console.error(err);alert('Ralat menghantar ucapan. Sila cuba lagi.');});
+      const name=wishNameInput.value.trim();const text=wishTextInput.value.trim();
+      if(!name||!text){const m=!name?wishNameInput:wishTextInput;m.style.borderColor='#e57373';setTimeout(()=>m.style.borderColor='',1200);return;}
+      wishesRef.push({name,text,timestamp:Date.now()}).then(()=>{clearWishDraft();wishNameInput.value='';wishTextInput.value='';closeWishModal();showToast();}).catch(err=>{console.error(err);alert('Ralat menghantar ucapan. Sila cuba lagi.');});
     }
     function showToast(){const t=document.getElementById('wish-toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 
