@@ -84,13 +84,13 @@
         #music-fab .fab-ring{position:absolute;inset:-4px;border-radius:50%;border:2px solid transparent;border-top-color:var(--gold);border-right-color:rgba(201,168,76,.3);opacity:0;transition:opacity .3s}
         #music-fab.playing .fab-ring{opacity:1;animation:spin-ring 2.5s linear infinite}
         #music-fab.playing{box-shadow:0 4px 24px rgba(0,0,0,.35),0 0 16px rgba(201,168,76,.25)}
-        /* First-time music FAB attention animation */
+/* First-time music FAB attention animation */
 @keyframes music-fab-hint{
-    0%, 33.333%, 100%{
+    0%, 12%, 24%, 100%{
         transform:scale(1);
         box-shadow:0 4px 24px rgba(0,0,0,.35);
     }
-    16.666%{
+    6%, 18%{
         transform:scale(1.08);
         box-shadow:0 4px 24px rgba(0,0,0,.35),
                    0 0 22px rgba(201,168,76,.55);
@@ -1419,7 +1419,19 @@ fab.addEventListener('keydown',event=>{
         stopFabHint();
     }
 },{once:true});
-    function setFabState(p){fab.classList.toggle('playing',p);iconPlay.style.display=p?'none':'block';iconPause.style.display=p?'block':'none';}
+    // Start attention animation whenever website is opened
+fab.classList.add('hint-pulse');
+
+function setFabState(p){
+    fab.classList.toggle('playing',p);
+    iconPlay.style.display=p?'none':'block';
+    iconPause.style.display=p?'block':'none';
+
+    // Stop attention animation once music starts
+    if(p){
+        fab.classList.remove('hint-pulse');
+    }
+}
     function createRomanticMelody(){
       if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
       const chords=[[261.63,329.63,392],[293.66,349.23,440],[329.63,392,493.88],[261.63,329.63,392]];let ci=0;
