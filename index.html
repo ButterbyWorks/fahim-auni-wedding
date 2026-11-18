@@ -1859,6 +1859,15 @@ document.addEventListener('visibilitychange',()=>{
 
         card.appendChild(quote);
         card.appendChild(author);
+
+        // Desktop: pause while the mouse is over this wish.
+        card.addEventListener('pointerenter', event => {
+          if (event.pointerType === 'mouse') pauseTickerForReading();
+        });
+        card.addEventListener('pointerleave', event => {
+          if (event.pointerType === 'mouse') scheduleTickerResume();
+        });
+
         ticker.appendChild(card);
       });
 
@@ -1879,6 +1888,29 @@ document.addEventListener('visibilitychange',()=>{
     function startTicker(){
       if(tickerTimer!==null || wishesByKey.size<2 || manualPauseActive) return;
       tickerTimer=setInterval(advanceTicker,TICKER_INTERVAL_MS);
+    }
+
+    // Shared pause/resume controls for press-and-hold, hover, and manual swipes.
+    function pauseTickerForReading(){
+      if(currentCycleKeys.length<2) return;
+      manualPauseActive=true;
+      stopTicker();
+      if(tickerInactivityTimer!==null){
+        clearTimeout(tickerInactivityTimer);
+        tickerInactivityTimer=null;
+      }
+    }
+
+    function scheduleTickerResume(){
+      if(currentCycleKeys.length<2) return;
+      if(tickerInactivityTimer!==null) clearTimeout(tickerInactivityTimer);
+      tickerInactivityTimer=setTimeout(()=>{
+        tickerInactivityTimer=null;
+        manualPauseActive=false;
+        // Give the guest five seconds after releasing/leaving, then advance once.
+        advanceTicker();
+        startTicker();
+      },MANUAL_INACTIVITY_MS);
     }
 
     // Move to one card using the same fade transition for autoplay and manual swipes.
@@ -1926,13 +1958,8 @@ document.addEventListener('visibilitychange',()=>{
     function handleWishSwipe(direction){
       if(currentCycleKeys.length<2) return;
 
-      // Any gesture pauses autoplay. Repeated swipes restart this 5-second idle window.
-      manualPauseActive=true;
-      stopTicker();
-      if(tickerInactivityTimer!==null){
-        clearTimeout(tickerInactivityTimer);
-        tickerInactivityTimer=null;
-      }
+      // Any swipe pauses autoplay. Repeated swipes restart the 5-second idle window.
+      pauseTickerForReading();
 
       const cards=Array.from(document.querySelectorAll('#wish-ticker .wish-card'));
       if(!cards.length) return;
@@ -1952,34 +1979,64 @@ document.addEventListener('visibilitychange',()=>{
         transitionToIndex(wrappedIndex);
       }
 
-      tickerInactivityTimer=setTimeout(()=>{
-        tickerInactivityTimer=null;
-        manualPauseActive=false;
-        // After five idle seconds, advance once; normal 3.8-second autoplay then resumes.
-        advanceTicker();
-        startTicker();
-      },MANUAL_INACTIVITY_MS);
+      scheduleTickerResume();
     }
 
     // Hidden gesture: swipe left for next, swipe right for previous. No extra UI controls.
     (function initWishSwipe(){
       const ticker=document.getElementById('wish-ticker');
       let pointerStart=null;
+      let holdTimer=null;
+      let holdActivated=false;
       const SWIPE_THRESHOLD=45;
+      const HOLD_DELAY_MS=250;
+
       ticker.addEventListener('pointerdown',event=>{
         if(event.pointerType==='mouse' && event.button!==0) return;
         pointerStart={x:event.clientX,y:event.clientY,pointerId:event.pointerId};
+
+        // Mobile: a short hold pauses reading without interfering with vertical scrolling.
+        if(event.pointerType!=='mouse' && currentCycleKeys.length>1){
+          holdActivated=false;
+          if(holdTimer!==null) clearTimeout(holdTimer);
+          holdTimer=setTimeout(()=>{
+            holdTimer=null;
+            holdActivated=true;
+            pauseTickerForReading();
+          },HOLD_DELAY_MS);
+        }
       });
+
       ticker.addEventListener('pointerup',event=>{
         if(!pointerStart || pointerStart.pointerId!==event.pointerId) return;
         const dx=event.clientX-pointerStart.x;
         const dy=event.clientY-pointerStart.y;
         pointerStart=null;
-        // Ignore taps and vertical page scrolling; only intentional horizontal swipes count.
-        if(Math.abs(dx)<SWIPE_THRESHOLD || Math.abs(dx)<Math.abs(dy)*1.2) return;
-        handleWishSwipe(dx<0 ? 1 : -1);
+
+        if(holdTimer!==null){clearTimeout(holdTimer);holdTimer=null;}
+
+        // Preserve the existing left/right swipe navigation.
+        if(Math.abs(dx)>=SWIPE_THRESHOLD && Math.abs(dx)>=Math.abs(dy)*1.2){
+          holdActivated=false;
+          handleWishSwipe(dx<0 ? 1 : -1);
+          return;
+        }
+
+        // Releasing a long press starts the five-second reading grace period.
+        if(holdActivated){
+          holdActivated=false;
+          scheduleTickerResume();
+        }
       });
-      ticker.addEventListener('pointercancel',()=>{pointerStart=null;});
+
+      ticker.addEventListener('pointercancel',()=>{
+        pointerStart=null;
+        if(holdTimer!==null){clearTimeout(holdTimer);holdTimer=null;}
+        if(holdActivated){
+          holdActivated=false;
+          scheduleTickerResume();
+        }
+      });
     })();
 
     const observer=new IntersectionObserver(entries=>{
