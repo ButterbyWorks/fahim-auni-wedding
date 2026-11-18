@@ -2,6 +2,17 @@
 <html lang="ms"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    (() => {
+      const modules = {
+        fahimdanauni: { key: 'fahimdanauni', side: 'groom', firstName: 'Fahim Adib', secondName: 'Aunibilla', firstShort: 'Fahim', secondShort: 'Auni' },
+        aunidanfahim: { key: 'aunidanfahim', side: 'bride', firstName: 'Aunibilla', secondName: 'Fahim Adib', firstShort: 'Auni', secondShort: 'Fahim' }
+      };
+      const requestedKey = window.location.hash.slice(1).trim().toLowerCase();
+      window.ACTIVE_INVITATION_MODULE = modules[requestedKey] || null;
+      document.documentElement.classList.add(window.ACTIVE_INVITATION_MODULE ? 'module-valid' : 'module-invalid');
+    })();
+  </script>
   <title>Undangan Perkahwinan Fahim &amp; Aunibilla</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💍</text></svg>">
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
@@ -10,6 +21,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <style>
+        html.module-invalid,html.module-invalid body{min-height:100%;margin:0;background:#0f1b3d!important;}
+        html.module-invalid body>*:not(#module-fallback){display:none!important;}
+        #module-fallback{display:none;}
+        html.module-invalid #module-fallback{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:#0f1b3d;color:#fdf8f0;font-family:'Poppins',sans-serif;font-size:16px;text-align:center;letter-spacing:.02em;}
         :root { --navy:#0f1b3d; --gold:#c9a84c; --ivory:#fdf8f0; --cream:#f5efe3; }
         body { font-family:'Poppins',sans-serif; }
 
@@ -86,11 +101,11 @@
         #music-fab.playing{box-shadow:0 4px 24px rgba(0,0,0,.35),0 0 16px rgba(201,168,76,.25)}
         /* First-time music FAB attention animation */
 @keyframes music-fab-hint{
-    0%, 12%, 24%, 100%{
+    0%, 20%, 40%, 100%{
         transform:scale(1);
         box-shadow:0 4px 24px rgba(0,0,0,.35);
     }
-    6%, 18%{
+    10%, 30%{
         transform:scale(1.08);
         box-shadow:0 4px 24px rgba(0,0,0,.35),
                    0 0 22px rgba(201,168,76,.55);
@@ -98,7 +113,7 @@
 }
 
 #music-fab.hint-pulse{
-    animation:music-fab-hint 6s ease-in-out infinite;
+    animation:music-fab-hint 2s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce){
@@ -226,6 +241,7 @@
         .panel-label{font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:rgba(201,168,76,.6);text-align:center;margin-bottom:14px}
         .p-contact-group-title{margin:13px 0 3px;padding-bottom:6px;border-bottom:1px solid rgba(201,168,76,.22);font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:rgba(201,168,76,.85)}
         .p-contact-group-title:first-of-type{margin-top:0}
+        .contact-group .p-contact-group-title:first-of-type{margin-top:13px}
         .p-contact-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(201,168,76,.12)}
         .p-contact-row:last-of-type{border-bottom:none}
         .p-contact-info{display:flex;flex-direction:column;gap:2px}
@@ -316,6 +332,7 @@
   </style>
 </head>
 <body class="w-full" style="background:rgb(253,248,240);">
+  <div id="module-fallback">Nothing to see here, buddy.</div>
 
   <!-- Music indicator -->
   <div id="music-indicator">
@@ -325,7 +342,7 @@
 
   <div id="loader">
     <div class="loader-icon">💍</div>
-    <div class="loader-names">Fahim &amp; Auni</div>
+    <div class="loader-names" id="loader-names">Fahim &amp; Auni</div>
     <div class="loader-dots"><span></span><span></span><span></span></div>
   </div>
 
@@ -338,9 +355,9 @@
     <div class="text-center px-6 z-10">
       <p class="cover-child cover-d1 text-sm uppercase tracking-[0.3em] mb-10" style="color:rgb(201,168,76);font-weight:300;font-size:16px;">Walimatulurus</p>
       <div class="cover-child cover-d2 mb-2" style="display:flex;flex-direction:column;align-items:center;gap:0;">
-        <img src="fahim.png"     alt="Fahim" style="width:72%;max-width:280px;display:block;margin-right:18%;">
-        <img src="ampersand.png" alt="&"     style="width:12%;max-width:48px;display:block;margin:-4px 0;">
-        <img src="auni.png"      alt="Auni"  style="width:62%;max-width:240px;display:block;margin-left:18%;">
+        <img id="cover-fahim" data-cover-person="fahim" src="fahim.png" alt="Fahim" style="width:72%;max-width:280px;display:block;margin-right:18%;">
+        <img id="cover-ampersand" src="ampersand.png" alt="&amp;" style="width:12%;max-width:48px;display:block;margin:-4px 0;">
+        <img id="cover-auni" data-cover-person="auni" src="auni.png" alt="Auni" style="width:62%;max-width:240px;display:block;margin-left:18%;">
       </div>
       <div class="cover-child cover-d3">
         <div class="gold-divider w-48 mx-auto my-8"></div>
@@ -362,9 +379,9 @@
     <div class="px-8 z-10" style="width:100%;max-width:480px;">
       <p class="hero-child hero-d1 uppercase tracking-[0.3em]" style="color:rgba(201,168,76,.6);font-size:11px;margin-bottom:28px;">Perkahwinan</p>
       <div class="hero-child hero-d2">
-        <p class="font-callig" style="color:var(--ivory);font-size:66px;line-height:1.1;">Fahim Adib</p>
+        <p id="hero-name-first" class="font-callig" style="color:var(--ivory);font-size:66px;line-height:1.1;">Fahim Adib</p>
         <p class="font-display" style="color:var(--gold);font-size:26px;font-style:italic;margin:4px 0;">&amp;</p>
-        <p class="font-callig" style="color:var(--ivory);font-size:66px;line-height:1.1;">Aunibilla</p>
+        <p id="hero-name-second" class="font-callig" style="color:var(--ivory);font-size:66px;line-height:1.1;">Aunibilla</p>
       </div>
       <div class="hero-child hero-d3">
         <div class="gold-divider my-6" style="width:96px;"></div>
@@ -399,16 +416,16 @@
       <div class="absolute inset-0 cream-ornament pointer-events-none"></div>
       <div class="max-w-lg mx-auto relative z-10">
         <p class="text-sm mb-8" style="color:rgb(15,27,61);font-size:14px;letter-spacing:.01em;line-height:1.7;">Dengan penuh kesyukuran,<br>kami menjemput<br>Dato' / Datin / Tuan / Puan / Encik / Cik</p>
-        <div class="mb-8">
+        <div id="family-groom-parents" class="mb-8">
           <p class="font-semibold leading-snug" style="color:rgb(15,27,61);font-size:20px;">Azhar Bin Ahmad</p>
           <p class="my-1" style="color:var(--gold);font-size:16px;">&amp;</p>
           <p class="font-semibold leading-snug" style="color:rgb(15,27,61);font-size:20px;">Ruzana Binti Adnan</p>
           <p class="text-xs uppercase tracking-widest mt-2" style="color:var(--gold);font-size:12px;">Ibu Bapa Pengantin Lelaki</p>
         </div>
-        <div class="flex items-center justify-center gap-3 my-4">
+        <div id="family-parents-divider" class="flex items-center justify-center gap-3 my-4">
           <div class="gold-divider flex-1 max-w-[60px]"></div><span style="color:var(--gold);">✦</span><div class="gold-divider flex-1 max-w-[60px]"></div>
         </div>
-        <div class="mb-10">
+        <div id="family-bride-parents" class="mb-10">
           <p class="font-semibold leading-snug" style="color:rgb(15,27,61);font-size:20px;">Jamaluddin Bin Mohamed</p>
           <p class="my-1" style="color:var(--gold);font-size:16px;">&amp;</p>
           <p class="font-semibold leading-snug" style="color:rgb(15,27,61);font-size:20px;">Rohana Binti Ali</p>
@@ -416,12 +433,12 @@
         </div>
         <div class="gold-divider w-32 mx-auto my-8"></div>
         <p class="leading-relaxed mb-8" style="color:rgb(15,27,61);font-size:14px;">Dengan segala hormatnya, kami mempersilakan Dato'/Datin/Tuan/Puan/Encik/Cik ke majlis perkahwinan anakanda kami</p>
-        <div class="space-y-2 mb-3">
-          <p class="font-callig font-bold" style="color:rgb(15,27,61);font-size:46px;">Fahim Adib Bin Jamaluddin</p>
-          <p class="text-sm mb-3" style="color:var(--navy);opacity:.7;font-size:14px;">Putera Azhar &amp; Ruzana</p>
-          <p style="color:var(--gold);">bersama</p>
-          <p class="font-callig font-bold" style="color:rgb(15,27,61);font-size:46px;">Aunibilla Binti Jamaluddin</p>
-          <p class="text-sm" style="color:var(--navy);opacity:.7;font-size:14px;">Puteri Jamaluddin &amp; Rohana</p>
+        <div id="family-couple-names" class="space-y-2 mb-3">
+          <p id="family-groom-name" class="font-callig font-bold" style="color:rgb(15,27,61);font-size:46px;">Fahim Adib Bin Jamaluddin</p>
+          <p id="family-groom-child" class="text-sm mb-3" style="color:var(--navy);opacity:.7;font-size:14px;">Putera Azhar &amp; Ruzana</p>
+          <p id="family-together" style="color:var(--gold);">bersama</p>
+          <p id="family-bride-name" class="font-callig font-bold" style="color:rgb(15,27,61);font-size:46px;">Aunibilla Binti Jamaluddin</p>
+          <p id="family-bride-child" class="text-sm" style="color:var(--navy);opacity:.7;font-size:14px;">Puteri Jamaluddin &amp; Rohana</p>
         </div>
       </div>
     </section>
@@ -510,7 +527,7 @@
 
     <!-- Footer -->
     <footer class="scroll-fade py-10 px-6 text-center" style="background-color:var(--navy);">
-      <p style="color:rgb(201,168,76);opacity:.6;font-size:14px;">Fahim &amp; Auni — 30.01.2027</p>
+      <p id="footer-couple-names" style="color:rgb(201,168,76);opacity:.6;font-size:14px;">Fahim &amp; Auni — 30.01.2027</p>
     </footer>
   </div>
 
@@ -531,8 +548,8 @@
 
         <fieldset class="rsvp-field">
           <legend class="rsvp-label">Pihak <span>*</span></legend>
-          <label class="rsvp-choice"><input type="radio" name="rsvp-party" value="Pihak Pengantin Lelaki (Fahim)" required><span>Pihak Pengantin Lelaki (Fahim)</span></label>
-          <label class="rsvp-choice"><input type="radio" name="rsvp-party" value="Pihak Pengantin Perempuan (Auni)" required><span>Pihak Pengantin Perempuan (Auni)</span></label>
+          <label id="rsvp-groom-option" class="rsvp-choice"><input type="radio" name="rsvp-party" value="Pihak Pengantin Lelaki (Fahim)" required><span>Pihak Pengantin Lelaki (Fahim)</span></label>
+          <label id="rsvp-bride-option" class="rsvp-choice"><input type="radio" name="rsvp-party" value="Pihak Pengantin Perempuan (Auni)" required><span>Pihak Pengantin Perempuan (Auni)</span></label>
         </fieldset>
 
         <fieldset class="rsvp-field">
@@ -586,7 +603,7 @@
   <!-- Wish Modal -->
   <div id="wish-overlay" onclick="handleOverlayClick(event)">
     <div id="wish-sheet">
-      <p class="text-center font-semibold mb-5" style="color:#c0392b;font-size:16px;letter-spacing:.05em;">Ucapan untuk Fahim &amp; Auni ❤️</p>
+      <p id="wish-modal-title" class="text-center font-semibold mb-5" style="color:#c0392b;font-size:16px;letter-spacing:.05em;">Ucapan untuk Fahim &amp; Auni ❤️</p>
       <div class="space-y-3">
         <input id="wish-name" type="text" placeholder="Nama anda..." maxlength="60">
         <textarea id="wish-text" rows="3" placeholder="Tulis ucapan di sini..." maxlength="200"></textarea>
@@ -600,7 +617,7 @@
   <div id="wish-toast">
     <div class="toast-icon">❤️</div>
     <div class="toast-body">
-      <div class="toast-title">UNDANGAN FAHIM &amp; AUNI</div>
+      <div class="toast-title" id="toast-title">UNDANGAN FAHIM &amp; AUNI</div>
       <div class="toast-msg">Ucapan dihantar! Terima kasih 🌸</div>
     </div>
   </div>
@@ -704,7 +721,7 @@
         <!-- Calendar -->
         <div class="panel-slide">
           <p class="panel-label">Simpan Tarikh</p>
-          <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Walimatulurus+Fahim+%26+Aunibilla&dates=20270130T030000Z/20270130T080000Z&details=Jemput+hadir+ke+majlis+perkahwinan+Fahim+%26+Aunibilla&location=ReyMagical+Event+Space,+18+Jalan+Ekoperniagaan+1,+Taman+Kota+Masai,+81700+Pasir+Gudang,+Johor" target="_blank" class="p-option"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Google Calendar</span></a>
+          <a id="google-calendar-link" href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Walimatulurus+Fahim+%26+Aunibilla&dates=20270130T030000Z/20270130T080000Z&details=Jemput+hadir+ke+majlis+perkahwinan+Fahim+%26+Aunibilla&location=ReyMagical+Event+Space,+18+Jalan+Ekoperniagaan+1,+Taman+Kota+Masai,+81700+Pasir+Gudang,+Johor" target="_blank" class="p-option"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Google Calendar</span></a>
           <a href="fahim-auni.ics" download class="p-option"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Apple Calendar</span></a>
         </div>
       </div>
@@ -712,6 +729,82 @@
   </div>
 
   <script>
+    if (window.ACTIVE_INVITATION_MODULE) {
+    const ACTIVE_MODULE = window.ACTIVE_INVITATION_MODULE;
+
+    function applyInvitationModule(){
+      const isBrideFirst = ACTIVE_MODULE.side === 'bride';
+      const coverStack = document.querySelector('#cover-screen .cover-child.cover-d2');
+      const fahimImage = document.getElementById('cover-fahim');
+      const auniImage = document.getElementById('cover-auni');
+      const ampersandImage = document.getElementById('cover-ampersand');
+      const firstImage = isBrideFirst ? auniImage : fahimImage;
+      const secondImage = isBrideFirst ? fahimImage : auniImage;
+
+      // Keep the original image sizing/alignment by position; only swap the people.
+      firstImage.style.cssText = 'width:72%;max-width:280px;display:block;margin-right:18%;';
+      secondImage.style.cssText = 'width:62%;max-width:240px;display:block;margin-left:18%;';
+      coverStack.append(firstImage, ampersandImage, secondImage);
+      firstImage.alt = ACTIVE_MODULE.firstShort;
+      secondImage.alt = ACTIVE_MODULE.secondShort;
+
+      document.getElementById('loader-names').textContent = ACTIVE_MODULE.firstShort + ' & ' + ACTIVE_MODULE.secondShort;
+      document.getElementById('hero-name-first').textContent = ACTIVE_MODULE.firstName;
+      document.getElementById('hero-name-second').textContent = ACTIVE_MODULE.secondName;
+      document.title = 'Undangan Perkahwinan ' + ACTIVE_MODULE.firstShort + ' & ' + ACTIVE_MODULE.secondShort;
+
+      const rsvpGroomOption = document.getElementById('rsvp-groom-option');
+      const rsvpBrideOption = document.getElementById('rsvp-bride-option');
+      if (isBrideFirst) rsvpGroomOption.parentElement.insertBefore(rsvpBrideOption, rsvpGroomOption);
+
+      const familyContainer = document.getElementById('family-groom-parents').parentElement;
+      const groomParents = document.getElementById('family-groom-parents');
+      const brideParents = document.getElementById('family-bride-parents');
+      const parentsDivider = document.getElementById('family-parents-divider');
+      if (isBrideFirst) {
+        familyContainer.insertBefore(brideParents, groomParents);
+        familyContainer.insertBefore(parentsDivider, groomParents);
+      }
+
+      const coupleNames = document.getElementById('family-couple-names');
+      const groomName = document.getElementById('family-groom-name');
+      const groomChild = document.getElementById('family-groom-child');
+      const together = document.getElementById('family-together');
+      const brideName = document.getElementById('family-bride-name');
+      const brideChild = document.getElementById('family-bride-child');
+      if (isBrideFirst) coupleNames.append(brideName, brideChild, together, groomName, groomChild);
+
+      // Wrap each existing contact heading and its rows, then order the groups.
+      const contactSlide = document.querySelector('#panel-track .panel-slide');
+      const contactHeadings = Array.from(contactSlide.querySelectorAll('.p-contact-group-title'));
+      const contactGroups = contactHeadings.map((heading, index) => {
+        const group = document.createElement('div');
+        group.className = 'contact-group';
+        group.dataset.side = index === 0 ? 'groom' : 'bride';
+        heading.parentNode.insertBefore(group, heading);
+        let node = heading;
+        while (node && !(node !== heading && (node.classList.contains('p-contact-group-title') || node.classList.contains('panel-slide')))) {
+          const next = node.nextElementSibling;
+          group.appendChild(node);
+          node = next;
+        }
+        return group;
+      });
+      const contactGroupsContainer = contactGroups[0].parentElement;
+      if (isBrideFirst) contactGroupsContainer.append(contactGroups[1], contactGroups[0]);
+
+      const coupleLabel = ACTIVE_MODULE.firstShort + ' & ' + ACTIVE_MODULE.secondShort;
+      document.getElementById('footer-couple-names').textContent = coupleLabel + ' — 30.01.2027';
+      document.getElementById('wish-modal-title').textContent = 'Ucapan untuk ' + coupleLabel + ' ❤️';
+      document.getElementById('toast-title').textContent = 'UNDANGAN ' + coupleLabel.toUpperCase();
+      const calendarLink = document.getElementById('google-calendar-link');
+      const calendarUrl = new URL(calendarLink.href);
+      calendarUrl.searchParams.set('text', 'Walimatulurus ' + coupleLabel);
+      calendarUrl.searchParams.set('details', 'Jemput hadir ke majlis perkahwinan ' + coupleLabel);
+      calendarLink.href = calendarUrl.toString();
+    }
+
+    applyInvitationModule();
     lucide.createIcons();
 
     /* ── Loader ── */
@@ -855,7 +948,7 @@
     let rsvpSubmitting = false;
     let rsvpPendingSubmissionId = null;
     let rsvpResponseTimeout = null;
-    const RSVP_DRAFT_KEY = 'fahim_auni_rsvp_draft_v1';
+    const RSVP_DRAFT_KEY = 'fahim_auni_rsvp_draft_v1_' + ACTIVE_MODULE.key;
 
     function saveRsvpDraft(){
       const draft={
@@ -1387,18 +1480,15 @@
     const fab=document.getElementById('music-fab');
     const iconPlay=document.getElementById('fab-icon-play');
     const iconPause=document.getElementById('fab-icon-pause');
-    // Start attention animation whenever website is opened
+    // Each page session starts with the hint; the first Play press locks it off.
+let hasPressedPlayThisSession = false;
 fab.classList.add('hint-pulse');
 
 function setFabState(p){
     fab.classList.toggle('playing',p);
     iconPlay.style.display=p?'none':'block';
     iconPause.style.display=p?'block':'none';
-
-    // Stop attention animation once music starts
-    if(p){
-        fab.classList.remove('hint-pulse');
-    }
+    if(hasPressedPlayThisSession) fab.classList.remove('hint-pulse');
 }
     function createRomanticMelody(){
       if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
@@ -1454,6 +1544,8 @@ function setFabState(p){
     }
 
   }else{
+    hasPressedPlayThisSession = true;
+    fab.classList.remove('hint-pulse');
     manuallyPaused=false;
     pausedByVisibility=false;
     isPlaying=true;
@@ -1597,7 +1689,7 @@ document.addEventListener('visibilitychange',()=>{
       console.error('Unable to load wedding wishes from Firebase:', error);
     });
 
-    const WISH_DRAFT_KEY='fahim_auni_wish_draft_v1';
+    const WISH_DRAFT_KEY='fahim_auni_wish_draft_v1_' + ACTIVE_MODULE.key;
     const wishNameInput=document.getElementById('wish-name');
     const wishTextInput=document.getElementById('wish-text');
 
@@ -1791,5 +1883,13 @@ document.addEventListener('visibilitychange',()=>{
     const observer=new IntersectionObserver(entries=>{
       entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');else if(e.boundingClientRect.top>0)e.target.classList.remove('visible');});
     },{threshold:.08,rootMargin:'0px 0px -40px 0px'});
+
+    // The original page uses inline HTML event handlers; expose their functions.
+    Object.assign(window, {
+      openRsvpModal, closeRsvpModal, handleRsvpOverlayClick, submitRsvp,
+      openInvitation, openContent, goBack, goToSlide, openPanel,
+      openWishModal, closeWishModal, handleOverlayClick, submitWish
+    });
+    }
   </script>
 </body></html>
