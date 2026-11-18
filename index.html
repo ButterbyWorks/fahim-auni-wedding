@@ -21,10 +21,64 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <style>
-        html.module-invalid,html.module-invalid body{min-height:100%;margin:0;background:#0f1b3d!important;}
-        html.module-invalid body>*:not(#module-fallback){display:none!important;}
-        #module-fallback{display:none;}
-        html.module-invalid #module-fallback{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:#0f1b3d;color:#fdf8f0;font-family:'Poppins',sans-serif;font-size:16px;text-align:center;letter-spacing:.02em;}
+        
+html.module-invalid,html.module-invalid body {
+    min-height:100%;
+    margin:0;
+    background:#0f1b3d!important;
+}
+
+html.module-invalid body>*:not(#module-fallback) {
+    display:none!important;
+}
+
+#module-fallback {
+    display:none;
+}
+
+html.module-invalid #module-fallback {
+    position:fixed;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:18px;
+    padding:24px;
+    background:radial-gradient(
+        circle at center,
+        rgba(201,168,76,.10) 0%,
+        rgba(15,27,61,.98) 48%,
+        #0b1228 100%
+    );
+    color:#fdf8f0;
+    text-align:center;
+}
+
+#module-fallback .fallback-icon {
+    width:40px;
+    height:40px;
+    color:#c9a84c;
+}
+
+#module-fallback .fallback-title {
+    margin:0;
+    font-family:'Playfair Display',serif;
+    font-size:clamp(28px,5vw,38px);
+    font-weight:400;
+    line-height:1.2;
+    color:#fdf8f0;
+}
+
+#module-fallback .fallback-description {
+    margin:0;
+    font-family:'Poppins',sans-serif;
+    font-size:14px;
+    font-weight:400;
+    line-height:1.7;
+    color:rgba(253,248,240,.7);
+}
+
         :root { --navy:#0f1b3d; --gold:#c9a84c; --ivory:#fdf8f0; --cream:#f5efe3; }
         body { font-family:'Poppins',sans-serif; }
 
@@ -332,7 +386,30 @@
   </style>
 </head>
 <body class="w-full" style="background:rgb(253,248,240);">
-  <div id="module-fallback">Nothing to see here, buddy.</div>
+  
+<div id="module-fallback">
+    <svg class="fallback-icon"
+         xmlns="http://www.w3.org/2000/svg"
+         viewBox="0 0 24 24"
+         fill="none"
+         stroke="currentColor"
+         stroke-width="1.6"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         aria-hidden="true">
+        <path d="M10.58 10.58a2 2 0 0 0 2.83 2.83"/>
+        <path d="M16.68 16.68A10.94 10.94 0 0 1 12 18c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-5.94"/>
+        <path d="M9.88 5.09A10.94 10.94 0 0 1 12 5c7 0 11 8 11 8a21.77 21.77 0 0 1-2.16 3.19"/>
+        <path d="m2 2 20 20"/>
+    </svg>
+
+    <p class="fallback-title">Nothing to see here, buddy.</p>
+
+    <p class="fallback-description">
+        You weren't supposed to be here anyway....
+    </p>
+</div>
+
 
   <!-- Music indicator -->
   <div id="music-indicator">
